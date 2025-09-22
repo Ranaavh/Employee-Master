@@ -1,0 +1,813 @@
+﻿@using EmployeeMaster.Models.Employee
+@model IEnumerable<Employee>
+@{
+    ViewData["Title"] = "Employee List";
+}
+
+<div class="container mt-4">
+    <h4 class="text-center mb-4" style="color:dimgray">Employee List</h4>
+
+
+    <!-- Search and Add Button Container -->
+    <div class="d-flex align-items-center justify-content-center mb-3 ">
+        <form method="get" asp-action="Search" class="d-flex align-items-center w-50">
+            <div class="input-group">
+                <!-- Filter Icon Button on the Left -->
+                <button class="btn btn-primary d-flex align-items-center" type="button" id="toggleFilterBtn">
+                    <i class="bi bi-funnel-fill me-1"></i>
+                </button>
+
+                <!-- Search Input Field -->
+                <input type="text" name="query" class="form-control" placeholder="Search here..." style="border-right: 0;" />
+
+                <!-- Search Icon Button on the Right -->
+                <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </form>
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Deletion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete the selected employees?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add New Employee Button -->
+        
+        <div class="text-center mx-4">
+            <button type="button" class="btn btn-primary px-3" id="showAddEmployeeBtn">+</button>
+        </div>
+        <div class="text-center">
+            <button type="button" class="btn btn-danger px-3" id="DeleteEmployeeBtn"><i class="bi bi-trash"></i></button>
+        </div>
+    </div>
+    </div>
+
+
+    <!-- Toggleable Filter Form -->
+    <div id="searchFields" class="container mt-3 rounded shadow-sm" style="background-color: #f7f9fc; border-radius: 8px; width: 500px; ">
+    <form method="get" asp-action="Search">
+        <!-- Button to toggle filter fields -->
+        <div class="d-flex justify-content-between align-items-center p-3">
+            <button type="button" class="btn btn-primary">
+                <i class="bi bi-funnel-fill"></i> Filters
+            </button>
+            <h6 style="color:dimgray">Search Employees</h6>
+           
+        </div>
+
+        <!-- Hidden filter fields -->
+        <div  class="row p-2">
+            <!-- Name Field -->
+            <div class="d-flex align-items-center mb-2">
+                <label for="name" class="form-label me-2 mb-0" style="min-width: 100px;">Name</label>
+                <input type="text" id="name" name="name" class="form-control" placeholder="Enter name" />
+            </div>
+            <!-- Department Field -->
+            <div class="d-flex align-items-center mb-2">
+                <label for="department" class="form-label me-2 mb-0" style="min-width: 100px;">Department</label>
+                <input type="text" id="department" name="department" class="form-control" placeholder="Enter department" />
+            </div>
+            <!-- Position Field -->
+            <div class="d-flex align-items-center mb-2">
+                <label for="position" class="form-label me-2 mb-0" style="min-width: 100px;">Position</label>
+                <input type="text" id="position" name="position" class="form-control" placeholder="Enter position" />
+            </div>
+            <!-- Qualification Field -->
+            <div class="d-flex align-items-center mb-2">
+                <label for="qualification" class="form-label me-2 mb-0" style="min-width: 100px;">Qualification</label>
+                <input type="text" id="qualification" name="qualification" class="form-control" placeholder="Enter qualification" />
+            </div>
+            <!-- Search Button -->
+            <div class="text-center mt-1">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+    <!-- Add New Employee Form -->
+   <div class="d-flex align-items-center justify-content-center ">
+    <div id="addEmployeeFormContainer" class="container m-4 p-4 rounded shadow-sm" style="background-color: #f7f9fc; max-width: 600px; display:none">
+        <h5 class="mb-5 text-center">Add New Employee</h5>
+        <form id="addEmployeeForm">
+            <!-- Employee Name -->
+            <div class="d-flex align-items-center mb-3">
+                <label for="newName" class="form-label me-2 mb-0" style="min-width: 100px;">Name</label>
+                <input type="text" id="newName" class="form-control" required />
+            </div>
+
+            <!-- Department Dropdown -->
+            <div class="d-flex align-items-center mb-3">
+                <label for="newDepartment" class="form-label me-2 mb-0" style="min-width: 100px;">Department</label>
+                <select id="newDepartment" class="form-control" name="DepartmentID" required>
+                    <option value="">Select Department</option>
+                    @if (ViewBag.Department != null)
+                    {
+                        foreach (var department in ViewBag.Department)
+                        {
+                            <option value="@department.DepartmentID">@department.Name</option>
+                        }
+                    }
+                    else
+                    {
+                        <option value="">No Departments Available</option>
+                    }
+                </select>
+            </div>
+
+            <!-- Position -->
+            <div class="d-flex align-items-center mb-3">
+                <label for="newPosition" class="form-label me-2 mb-0" style="min-width: 100px;">Position</label>
+                <input type="text" id="newPosition" class="form-control" required />
+            </div>
+
+            <!-- Joining Date -->
+            <div class="d-flex align-items-center mb-3">
+                <label for="newJoiningDate" class="form-label me-2 mb-0" style="min-width: 100px;">Joining Date</label>
+                <input type="date" id="newJoiningDate" class="form-control" required />
+            </div>
+
+            <!-- Salary -->
+            <div class="d-flex align-items-center mb-3">
+                <label for="newSalary" class="form-label me-2 mb-0" style="min-width: 100px;">Salary</label>
+                <input type="number" id="newSalary" class="form-control" step="0.01" required />
+            </div>
+
+            <!-- Qualification Dropdown (dynamically loaded) -->
+            <div class="d-flex align-items-center mb-3">
+                <label for="newQualification" class="form-label me-2 mb-0" style="min-width: 100px;">Qualification</label>
+                <select id="newQualification" class="form-control" name="QualificationID" required>
+                    <option value="">Select Department First</option>
+                </select>
+            </div>
+
+            <!-- Mobile -->
+            <div class="d-flex align-items-center mb-3">
+                <label for="newMobile" class="form-label me-2 mb-0" style="min-width: 100px;">Mobile</label>
+                <input type="tel" id="newMobile" class="form-control" required />
+            </div>
+
+            <!-- Email -->
+            <div class="d-flex align-items-center mb-3">
+                <label for="newEmail" class="form-label me-2 mb-0" style="min-width: 100px;">Email</label>
+                <input type="email" id="newEmail" class="form-control" required />
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary w-50">Add Employee</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+    <!-- Edit Employee Form -->
+   <div class="d-flex align-items-center justify-content-center "> 
+<div id="editEmployeeFormContainer" class="container m-4 p-4 rounded shadow-sm" style="background-color: #f7f9fc; max-width: 600px; display:none">
+    <h5 class="mb-5 text-center">Edit Employee</h5>
+    <form id="editEmployeeForm">
+        <input type="hidden" id="editEmployeeID" />
+        <div class="d-flex align-items-center mb-3">
+            <label for="editName" class="form-label me-2 mb-0" style="min-width: 100px;">Name</label>
+            <input type="text" id="editName" class="form-control" required />
+        </div>
+        <div class="d-flex align-items-center mb-3">
+            <label for="editDepartment" class="form-label me-2 mb-0" style="min-width: 100px;">Department</label>
+            <select id="editDepartment" class="form-control" name="DepartmentID">
+                @if (ViewBag.Department != null)
+                {
+                    foreach (var department in ViewBag.Department)
+                    {
+                        <option value="@department.DepartmentID">@department.Name</option>
+                    }
+                }
+                else
+                {
+                    <option value="">No Departments Available</option>
+                }
+            </select>
+        </div>
+           
+        <div class="d-flex align-items-center mb-3">
+            <label for="editPosition" class="form-label me-2 mb-0" style="min-width: 100px;">Position</label>
+            <input type="text" id="editPosition" class="form-control" required />
+        </div>
+        <div class="d-flex align-items-center mb-3">
+            <label for="editJoiningDate" class="form-label me-2 mb-0" style="min-width: 100px;">Joining Date</label>
+            <input type="date" id="editJoiningDate" class="form-control" required />
+        </div>
+        <div class="d-flex align-items-center mb-3">
+            <label for="editSalary" class="form-label me-2 mb-0" style="min-width: 100px;">Salary</label>
+            <input type="number" id="editSalary" class="form-control" step="0.01" required />
+        </div>
+          <div class="d-flex align-items-center mb-3">
+                <label for="editQualification" class="form-label me-2 mb-0" style="min-width: 100px;">Qualification</label>
+                <select id="editQualification" class="form-control" name="QualificationID" current-qualification-id="" required>
+                    <option value="">Select Department First</option>
+                </select>
+          </div>
+
+           
+        <div class="d-flex align-items-center mb-3">
+            <label for="editMobile" class="form-label me-2 mb-0" style="min-width: 100px;">Mobile</label>
+            <input type="tel" id="editMobile" class="form-control" required />
+        </div>
+        <div class="d-flex align-items-center mb-3">
+            <label for="editEmail" class="form-label me-2 mb-0" style="min-width: 100px;">Email</label>
+            <input type="email" id="editEmail" class="form-control" required />
+        </div>
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary w-50">Save Changes</button>
+        </div>
+    </form>
+</div>
+</div>
+
+ 
+    <!-- Employee Table -->
+   <div class="table-responsive mt-4 shadow-sm rounded">
+    <table class="table table-hover  align-middle">
+        <thead class="table-primary text-center">
+            <tr>
+                <th class="py-3">Select</th>
+                <th class="py-3">Name</th>   
+                <th class="py-3">Department</th>
+                <th class="py-3">Position</th>
+                <th class="py-3">Joining Date</th>
+                <th class="py-3">Salary</th>
+                <th class="py-3">Qualification</th>
+                <th class="py-3">Mobile</th>
+                <th class="py-3">Email</th>
+                <th class="py-3">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">No employees found</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var employee in Model)
+                {
+                    <tr data-employee-id="@employee.EmployeeID" class="employee-row">
+
+                        <td>
+                            <input type="checkbox" class="employee-checkbox" value="@employee.EmployeeID" />
+                        </td>
+                        <td>
+                            <span class="employee-name">@employee.Name</span>
+                            <input type="text" class="form-control edit-input" value="@employee.Name" style="display:none;" />
+                        </td>
+
+                        <td>
+                            <span id="editDepartment" class="employee-department">@employee.Department</span>
+                            <select id="editDepartment"  class="form-control edit-input department-select" name="DepartmentID" style="display:none;">
+                                @if (ViewBag.Department != null)
+                                {
+                                    foreach (var department in ViewBag.Department)
+                                    {
+                                        <option value="@department.DepartmentID">@department.Name</option>
+                                    }
+                                }
+                                else
+                                {
+                                    <option value="">No Departments Available</option>
+                                }
+                            </select>
+
+                        </td>
+                       
+                      
+                        <td>
+                            <span class="employee-position">@employee.Position</span>
+                            <input type="text" class="form-control edit-input" value="@employee.Position" style="display:none;" />
+                        </td>
+                        <td>
+                            <span class="employee-joiningDate" data-joining-date="@employee.JoiningDate.ToString("yyyy-MM-dd")">
+                                @employee.JoiningDate.ToString("dd-MM-yyyy")
+                            </span>
+
+                            <!-- Edit mode: input field in yyyy-MM-dd format (required for input[type="date"]) -->
+                            <input type="date" class="form-control edit-input" value="@employee.JoiningDate.ToString("yyyy-MM-dd")" style="display:none;" />
+                        </td>
+
+
+                        <td>
+                            <span class="employee-salary">₹@employee.Salary.ToString("N2")</span>
+                            <input type="number" class="form-control edit-input" value="@employee.Salary" step="0.01" style="display:none;" />
+                        </td>
+
+                        <td>
+                            <span class="employee-qualification" data-qualification-id="@employee.QualificationID">@employee.Qualification</span>
+                            <select id="newQualification" class="form-control edit-input" name="QualificationID" style="display:none;"  required>
+                                <option value="">Select Department First</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span class="employee-mobile">@employee.Mobile</span>
+                            <input type="tel" class="form-control edit-input" value="@employee.Mobile" style="display:none;" />
+                        </td>
+                        <td>
+                            <span class="employee-email">@employee.Email</span>
+                            <input type="email" class="form-control edit-input" value="@employee.Email" style="display:none;" />
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-secondary edit-btn me-1 mt-1">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </button>
+                            <button class="btn btn-sm btn-outline-success save-btn me-1 mt-1" style="display:none;">
+                                <i class="bi bi-check-square"></i> Save
+                            </button>
+
+                            <button type="button" class="btn btn-sm btn-secondary edit-2-btn" data-employee-id="@employee.EmployeeID">
+                                Edit Form
+                            </button>
+
+
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+
+
+
+@section Scripts {
+    
+    <script>
+        $(document).ready(function () {
+         
+
+            $('#toggleFilterBtn').click(function () {
+                $('#searchFields').toggle();
+            });
+
+           
+            $('#showAddEmployeeBtn').click(function () {
+                $('#addEmployeeFormContainer').toggle();
+
+
+            });
+
+
+            //add employee
+            $('#addEmployeeForm').submit(function (event) {
+                event.preventDefault(); // Prevent form submission
+
+                // Collect input values
+                var newName = $('#newName').val();
+                var newDepartmentID = $('#newDepartment').val();
+                var newDepartment = $('#newDepartment option:selected').text();
+                var newPosition = $('#newPosition').val();
+                var newJoiningDate = $('#newJoiningDate').val();
+                var newSalary = $('#newSalary').val();
+                var newQualificationID = $('#newQualification').val();
+                var newQualification = $('#newQualification option:selected').text();
+                var newMobile = $('#newMobile').val();
+                var newEmail = $('#newEmail').val();
+
+
+
+                // Make an AJAX request to add the employee
+                $.ajax({
+                    url: '@Url.Action("Create", "Employee")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        Name: newName,
+                        DepartmentID: newDepartmentID,
+                        Position: newPosition,
+                        JoiningDate: newJoiningDate,
+                        Salary: newSalary,
+                        QualificationID: newQualificationID,
+                        Mobile: newMobile,
+                        Email: newEmail
+                    }),
+                    success: function (result) {
+                        console.log("AJAX request successful. Result:", result);
+                        if (result.success) {
+                            var newEmployee = result.employee;
+                            console.log("New employee data:", newEmployee);
+
+                            // Add the new row to the table
+                            var newRow = `<tr data-employee-id="${newEmployee.employeeID}" class="employee-row">
+                                            <td><input type="checkbox" class="employee-checkbox" value="${newEmployee.employeeID}" /></td>
+                                            <td><span class="employee-name">${newName}</span><input type="text" class="form-control edit-input" value="${newName}" style="display:none;" /></td>
+                                            <td>
+                                                <span class="employee-department">${newDepartment}</span>
+                                                <select class="form-control edit-input" style="display:none;"></select>
+                                            </td>
+                                            <td><span class="employee-position">${newPosition}</span><input type="text" class="form-control edit-input" value="${newPosition}" style="display:none;" /></td>
+
+                                            <td>
+                                                 <span class="employee-joiningDate" data-joining-date="${newJoiningDate}">${newJoiningDate} </span>
+                                                 <input type="date" class="form-control edit-input" value="${newJoiningDate}" style="display:none;"/>
+                                            </td>
+
+                                            <td><span class="employee-salary">₹${parseFloat(newSalary).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span><input type="number" class="form-control edit-input" value="${newSalary}" step="0.01" style="display:none;" /></td>
+                                            <td>
+                                                <span class="employee-qualification">${newQualification}</span>
+                                                <select class="form-control edit-input" style="display:none;"></select>
+                                            </td>
+                                            <td><span class="employee-mobile">${newMobile}</span><input type="tel" class="form-control edit-input" value="${newMobile}" style="display:none;" /></td>
+                                            <td><span class="employee-email">${newEmail}</span><input type="email" class="form-control edit-input" value="${newEmail}" style="display:none;" /></td>
+                                            <td class="text-center">
+                                                <button class="btn btn-sm btn-outline-secondary edit-btn me-1 mt-1">
+                                                    <i class="bi bi-pencil-square"></i> Edit
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-success save-btn me-1 mt-1" style="display:none;">
+                                                    <i class="bi bi-check-square"></i> Save
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-secondary edit-2-btn" data-employee-id="${newEmployee.employeeID}">
+                                                    Edit 2
+                                                </button>
+                                            </td>
+                                        </tr>`;
+
+                            $('tbody').append(newRow);
+                            $('#addEmployeeForm')[0].reset();
+
+                            // Log dynamically added dropdown for debugging
+                            const departments = ["IT", "HR", "Sales"];
+                            var $newDropdown = $('tbody tr:last .edit-input').filter('select'); // Target the dropdown in the last added row
+
+                            // Add options to the dropdown and set the selected value
+                            departments.forEach(department => {
+                                var option = new Option(department, department);
+                                $newDropdown.append(option);
+                            });
+                            $newDropdown.val(newDepartment);
+                            console.log("Department dropdown updated.");
+
+                            const qualifications = ["MBA", "MCA", "MTech", "BTech", "BSc", "BBA", "BCA", "BCom"];
+                            var $newQualDropdown = $('tbody tr:last .edit-input').filter('select'); // Target the dropdown in the last added row
+
+                            // Add options to the dropdown and set the selected value
+                            qualifications.forEach(qualification => {
+                                var option = new Option(qualification, qualification);
+                                $newQualDropdown.append(option);
+                            });
+                            $newQualDropdown.val(newQualification);
+                            console.log("Qualification dropdown updated.");
+                        } else {
+                            console.error("Error in adding employee:", result.error);
+                            alert("Error adding employee");
+                        }
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.error("AJAX error:", textStatus, errorThrown, jqXHR.responseText);
+                        alert("An unexpected error occurred: " + jqXHR.responseText);
+                    }
+                });
+            });
+
+
+            // Handle the edit button click event to Populate the form fields
+            $(document).on('click', '.edit-2-btn', function () {
+                const employeeRow = $(this).closest('tr');
+                const employeeID = $(this).data('employee-id');
+                const departmentText = employeeRow.find('.employee-department').text().trim();
+                const qualificationID = employeeRow.find('.employee-qualification').data('qualification-id');
+                console.log(qualificationID, employeeID);
+
+                // Populate the form fields with employee data 
+                $('#editEmployeeID').val(employeeID);
+                $('#editName').val(employeeRow.find('.employee-name').text().trim());
+                $('#editPosition').val(employeeRow.find('.employee-position').text().trim());
+                $('#editJoiningDate').val(employeeRow.find('.employee-joiningDate').data('joining-date'));
+                $('#editSalary').val(employeeRow.find('.employee-salary').text().replace(/[^0-9.-]+/g, ""));
+                $('#editMobile').val(employeeRow.find('.employee-mobile').text().trim());
+                $('#editEmail').val(employeeRow.find('.employee-email').text().trim());
+
+                // Set the department dropdown and trigger change to load qualifications
+                $('#editDepartment option').each(function () {
+                    if ($(this).text().trim() === departmentText) {
+                        $(this).prop('selected', true).trigger('change'); // Trigger the change to load qualifications
+                    }
+                });
+
+                // Store the employee's qualification ID to select after loading qualifications
+                $('#editQualification').data('current-qualification-id', qualificationID);
+
+                // Show the edit form
+                $('#editEmployeeFormContainer').show();
+            });
+
+
+            // Handle department change event to load qualifications
+            $('#newDepartment, #editDepartment').change(function () {
+                const departmentID = $(this).val(); // Selected DepartmentID
+
+                if (departmentID) {
+                    // AJAX call to fetch qualifications based on selected department
+                    $.ajax({
+                        url: '@Url.Action("QualificationsByDepartment", "Employee")',
+                        type: 'GET',
+                        data: { departmentId: departmentID },
+                        success: function (response) {
+                            console.log(response);
+                            // Clear existing options in qualification dropdowns
+                            $('#newQualification').empty();
+                            $('#editQualification').empty();
+
+                            if (response && response.length > 0) {
+                                let options = '<option value="">Select Qualification</option>';
+                                $.each(response, function (index, qualification) {
+                                    options += `<option value="${qualification.qualificationID}">${qualification.name}</option>`;
+                                });
+
+                                // Append new options to qualification dropdowns
+                                $('#newQualification').append(options);
+                                $('#editQualification').append(options);
+
+                                // Pre-select the qualification in edit mode if ID is stored
+                                const currentQualificationID = $('#editQualification').data('current-qualification-id');
+                                if (currentQualificationID) {
+                                    $('#editQualification').val(currentQualificationID); //$('#editQualification').val(2); <option value="2">MCA</option>
+                                } 
+                                }
+                                else
+                                {
+                                $('#newQualification').append('<option value="">No Qualifications Available</option>');
+                                $('#editQualification').append('<option value="">No Qualifications Available</option>');
+                                 }
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error fetching qualifications:', error);
+                            alert('An error occurred while fetching qualifications.');
+                        }
+                    });
+                } else {
+                    // Default option if no department is selected
+                    $('#newQualification').empty().append('<option value="">Select Department First</option>');
+                    $('#editQualification').empty().append('<option value="">Select Department First</option>');
+                }
+            });
+
+            //edit employee form
+            $('#editEmployeeForm').on('submit', function (e) {
+                e.preventDefault();
+
+                const updatedEmployee = {
+                    EmployeeID: $('#editEmployeeID').val(),
+                    Name: $('#editName').val(),
+                    DepartmentID: $('#editDepartment').val(),
+                    Position: $('#editPosition').val(),
+                    JoiningDate: $('#editJoiningDate').val(),  // This will be in dd-MM-yyyy format
+                    Salary: $('#editSalary').val(),
+                    QualificationID: $('#editQualification').val(),
+                    Mobile: $('#editMobile').val(),
+                    Email: $('#editEmail').val()
+                };
+
+                // AJAX request to update employee data on the server
+                $.ajax({
+                    url: '/Employee/Edit',  // Update this URL based on your routing
+                    type: 'POST',
+                    data: updatedEmployee,
+                    success: function (response) {
+                        // Update the table row with new data
+                        const row = $(`tr[data-employee-id="${updatedEmployee.EmployeeID}"]`);
+                        row.find('.employee-name').text(updatedEmployee.Name);
+                        // Format joining date as dd-MM-yyyy
+                        var formattedDate = new Date(updatedEmployee.JoiningDate).toLocaleDateString('en-GB').replace(/\//g, '-');
+                        row.find('.employee-joiningDate').text(formattedDate);
+                        row.find('.employee-salary').text('₹' + parseFloat(updatedEmployee.Salary).toLocaleString(undefined, { minimumFractionDigits: 2 }));
+                        row.find('.employee-mobile').text(updatedEmployee.Mobile);
+                        row.find('.employee-email').text(updatedEmployee.Email);
+                        // Retrieve and set the selected department name for display
+                        const qualificationName = $('#editQualification option:selected').text();
+                        row.find('.employee-qualification').text(qualificationName);
+                        // Retrieve and set the selected department name for display
+                        const departmentName = $('#editDepartment option:selected').text();
+                        row.find('.employee-department').text(departmentName);
+                        // Hide the form after successful update
+                        $('#editEmployeeFormContainer').hide();
+                    },
+                    error: function (xhr) {
+                        console.error('Error updating employee:', xhr);
+                        alert('Failed to update employee. Please try again.');
+                    }
+                });
+            });
+
+            //double click on a row 
+            $(document).on("dblclick", ".employee-row", function () {
+                const employeeId = $(this).data("employee-id");
+                console.log(employeeId);
+                if (employeeId) {
+                    window.location.href = `@Url.Action("Attendance", "Employee")?employeeId=${employeeId}`;
+                }
+            });
+
+
+            // Delegated event handler for the Edit button
+            $(document).on('click','.edit-btn', function () {
+                var row = $(this).closest('tr');
+
+                // Get current department and qualification details
+                const departmentText = row.find('.employee-department').text().trim();
+                const qualificationID = row.find('.employee-qualification').data('qualification-id');
+
+                // Set the department dropdown to the correct department
+                row.find('select[name="DepartmentID"] option').each(function () {
+                    if ($(this).text().trim() === departmentText) {
+                        $(this).prop('selected', true).trigger('change'); // Trigger change to load qualifications
+                    }
+                });
+
+                // Store the employee's current qualification ID
+                row.find('select[name="QualificationID"]').data('current-qualification-id', qualificationID);
+              
+                // Hide all static text in the row and show input fields
+                row.find('.employee-name, .employee-position, .employee-joiningDate, .employee-department, .employee-qualification, .employee-salary, .employee-mobile, .employee-email').hide();
+                row.find('.edit-input').show().first().focus();
+
+                // Show the Save button and hide the Edit button
+                row.find('.save-btn').show();
+                $(this).hide();
+            });
+
+
+             // Handle department change event to load qualifications for inline edit
+             $(document).on('change', '.department-select', function () {
+                const departmentID = $(this).val(); // Selected DepartmentID
+                const qualificationDropdown = $(this).closest('tr').find('select[name="QualificationID"]');
+
+                if (departmentID) {
+                    // AJAX call to fetch qualifications based on selected department
+                    $.ajax({
+                        url: '@Url.Action("QualificationsByDepartment", "Employee")',
+                        type: 'GET',
+                        data: { departmentId: departmentID },
+                        success: function (response) {
+                            console.log(response);
+                            // Clear existing options in qualification dropdowns
+                            qualificationDropdown.empty();
+
+                            if (response && response.length > 0) {
+                                let options = '<option value="">Select Qualification</option>';
+                                $.each(response, function (index, qualification) {
+                                    options += `<option value="${qualification.qualificationID}">${qualification.name}</option>`;
+                                });
+
+                                // Append new options to qualification dropdown
+                                qualificationDropdown.append(options);
+
+                                // Pre-select the qualification in edit mode if ID is stored
+                                const currentQualificationID = qualificationDropdown.data('current-qualification-id');
+                                if (currentQualificationID) {
+                                    qualificationDropdown.val(currentQualificationID);
+                                }
+                            } else {
+                                qualificationDropdown.append('<option value="">No Qualifications Available</option>');
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error fetching qualifications:', error);
+                            alert('An error occurred while fetching qualifications.');
+                        }
+                    });
+                } else {
+                    // Default option if no department is selected
+                    qualificationDropdown.empty().append('<option value="">Select Department First</option>');
+                }
+            });
+
+
+            // Delegated event handler for the Save button
+            $(document).on('click','.save-btn', function () {
+                var row = $(this).closest('tr');
+                var employeeId = row.data('employee-id');
+
+                // Get values from the input fields
+                var name = row.find('.edit-input').eq(0).val();
+                var departmentId = row.find('select[name="DepartmentID"]').val();
+                var position = row.find('.edit-input').eq(2).val();
+                var joiningDate = row.find('.edit-input').eq(3).val();
+                var salary = row.find('.edit-input').eq(4).val();
+                var qualificationId = row.find('select[name="QualificationID"]').val();
+                var mobile = row.find('.edit-input').eq(6).val();
+                var email = row.find('.edit-input').eq(7).val(); 
+                // var departmentId = row.find('.edit-input').eq(8).val();
+      
+
+
+                // Make an AJAX request to update the employee
+                $.ajax({
+                    url: '@Url.Action("Edit", "Employee")',
+                    type: 'POST',
+                    data: {
+                        EmployeeID: employeeId,
+                        Name: name,
+                        DepartmentID: departmentId,
+                        Position: position,
+                        JoiningDate: joiningDate,
+                        Salary: salary,
+                        QualificationID: qualificationId,
+                        Mobile: mobile,
+                        Email: email,
+                    },
+                    success: function (result) {
+                        // Update new values in the table
+                        row.find('.employee-name').text(name);
+
+                        // Retrieve and set the selected department name
+                        var departmentName = row.find('select[name="DepartmentID"] option:selected').text();
+                        row.find('.employee-department').text(departmentName);
+                        row.find('.employee-position').text(position);
+                        row.find('.employee-joiningDate').text(new Date(joiningDate).toLocaleDateString());
+                        row.find('.employee-salary').text('₹' + parseFloat(salary).toLocaleString(undefined, { minimumFractionDigits: 2 }));
+                        var qualificationName = row.find('select[name="QualificationID"] option:selected').text();
+                        row.find('.employee-qualification').text(qualificationName);
+                        row.find('.employee-mobile').text(mobile);
+                        row.find('.employee-email').text(email);
+
+                        // Hide input fields and show the static text
+                        row.find('.edit-input').hide();
+                        row.find('.employee-name, .employee-department, .employee-position, .employee-joiningDate, .employee-salary, .employee-qualification, .employee-mobile, .employee-email').show();
+                        row.find('.save-btn').hide(); // Hide the Save button
+                        row.find('.edit-btn').show(); // Show the Edit button
+                    },
+                    error: function () {
+                        alert('Error updating employee');
+                    }
+                });
+            });
+
+         
+            // Handle delete multiple employees
+             $('#DeleteEmployeeBtn').click(function () {
+                    const selectedIds = $('.employee-checkbox:checked').map(function () {
+                        const value = $(this).val();
+                        return parseInt(value, 10);
+                    }).get();
+
+                  
+
+                    if (selectedIds.length === 0) {
+                        alert('Please select at least one employee to delete.');
+                        return;
+                    }
+
+                    // Show the modal
+                    $('#deleteConfirmationModal').modal('show');
+
+                    // Attach event to the confirm delete button
+                    $('#confirmDeleteBtn').off('click').on('click', function () {
+                        // Hide the modal after confirmation
+                        $('#deleteConfirmationModal').modal('hide');
+
+                        // Make AJAX request to delete employees
+                        $.ajax({
+                            url: '@Url.Action("DeleteMultiple", "Employee")',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(selectedIds),
+                            success: function (response) {
+                                if (response.success) {
+                                    selectedIds.forEach(function (id) {
+                                        $('tr[data-employee-id="' + id + '"]').remove();
+                                    });
+                                 
+                                } else {
+                                    alert("Error deleting employees");
+                                }
+                            },
+                            error: function (jqXHR) {
+                                alert("Error deleting employees: " + jqXHR.responseText);
+                            }
+                        });
+                    });
+                });
+            });
+
+    
+
+    </script>
+
+
+}
+

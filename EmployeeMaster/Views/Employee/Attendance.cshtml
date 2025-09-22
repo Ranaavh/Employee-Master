@@ -1,0 +1,613 @@
+﻿@using EmployeeMaster.Models.Attendance
+@using EmployeeMaster.ViewModels
+
+@model EmployeeAttendanceViewModel
+
+@{
+    ViewData["Title"] = "Attendance Records";    
+}
+
+<h5 style="color:#4f88c5;font-weight:500">Attendance Records for @Model.Employee.Name</h5>
+<hr />
+
+
+<!-- Employee Details Table -->
+<div id="employeeDetails" data-employee-id="@Model.Employee.EmployeeID">
+    <h5 class="my-4">Employee Details</h5>
+
+    <table class="table">
+        <tr>
+            <th>Name:</th>
+            <th>Department:</th>
+            <th>Position:</th>
+            <th>Joining Date:</th>
+        </tr>
+        <tr>
+            <!-- Editable Name Field -->
+            <td class="editable" data-field="Name">
+                <span>@Model.Employee.Name</span>
+                <input type="text" class="form-control edit-input" name="Name" value="@Model.Employee.Name" style="display:none;" />
+            </td>
+
+            <!-- Editable Department Field -->
+            <td class="editable" data-field="Department">
+                <span>@Model.Employee.Department</span>
+                <select id="attendanceDepartment" class="form-control edit-input department-select" name="DepartmentID" style="display:none;">
+                    <option value="">Select Department</option>
+                    @if (ViewBag.Department != null && ((List<EmployeeMaster.Models.Department.Department>)ViewBag.Department).Any())
+                    {
+                        foreach (var department in (List<EmployeeMaster.Models.Department.Department>)ViewBag.Department)
+                        {
+                            <option value="@department.DepartmentID">@department.Name</option>
+                        }
+                    }
+                    else
+                    {
+                        <option value="">No Departments Available</option>
+                    }
+
+                </select>
+
+            </td>
+
+            <!-- Editable Position Field -->
+            <td class="editable" data-field="Position">
+                <span>@Model.Employee.Position</span>
+                <input type="text" class="form-control edit-input" name="Position" value="@Model.Employee.Position" style="display:none;" />
+            </td>
+
+            <!-- Editable Joining Date Field -->
+            <td class="editable" data-field="JoiningDate">
+                <span>@Model.Employee.JoiningDate.ToString("dd-MM-yyyy")</span>
+                <input type="date" class="form-control edit-input" name="JoiningDate" value="@Model.Employee.JoiningDate.ToString("yyyy-MM-dd")" style="display:none;" />
+            </td>
+        </tr>
+
+        <tr>
+            <th>Salary:</th>
+            <th>Qualification:</th>
+            <th>Mobile:</th>
+            <th>Email:</th>
+        </tr>
+        <tr>
+            <!-- Editable Salary Field -->
+            <td class="editable" data-field="Salary">
+                <span>₹@Model.Employee.Salary.ToString("N2")</span>
+                <input type="text" class="form-control edit-input" name="Salary" value="@Model.Employee.Salary" style="display:none;" />
+            </td>
+
+            <!-- Editable Qualification Field -->
+            <td class="editable" data-field="Qualification">
+                <span>@Model.Employee.Qualification</span>
+                <select id="attendanceQualification" class="form-control edit-input qualification-select" name="QualificationID" data-current-qualification-id="@Model.Employee.QualificationID" style="display:none;">
+                    <option value="">Select Department First</option>
+                </select>
+            </td>
+
+            <!-- Editable Mobile Field -->
+            <td class="editable" data-field="Mobile">
+                <span>@Model.Employee.Mobile</span>
+                <input type="text" class="form-control edit-input" name="Mobile" value="@Model.Employee.Mobile" style="display:none;" />
+            </td>
+
+            <!-- Editable Email Field -->
+            <td class="editable" data-field="Email">
+                <span>@Model.Employee.Email</span>
+                <input type="email" class="form-control edit-input" name="Email" value="@Model.Employee.Email" style="display:none;" />
+            </td>
+        </tr>
+
+
+    </table>
+    <button id="saveChangesBtn" class="btn btn-primary" style="display:none;">Save Changes</button>
+    <button id="cancelBtn" class="btn btn-secondary" style="display:none;">Cancel</button>
+</div>
+
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the selected employees?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Attendance Records Table -->
+<div class="table-responsive mt-4 shadow-sm rounded">
+    <div class="text-center mx-4 d-flex align-items-center">
+        <h4 class="my-4" style="color:dimgray">Attendance Records</h4>
+        <div class="ml-auto">
+            <button type="button" class="btn btn-primary px-3" id="showAddRecordBtn">+</button>
+            <button type="button" class="btn btn-danger px-3" id="DeleteRecordBtn"><i class="bi bi-trash"></i></button>
+        </div>
+    </div>
+
+    <table class="table table-hover align-middle text-center">
+        <thead>
+            <tr style="background-color:slategray;color:white;">
+
+                <th class="py-3">Select</th>
+                <th class="py-3">S.No</th>
+                <th class="py-3">Employee ID</th>
+                <th class="py-3">Date</th>
+                <th class="py-3">Status</th>
+                <th class="py-3">Total Hours</th>
+                <th class="py-3">Leave Type</th>
+
+            </tr>
+        </thead>
+        
+        <tbody >
+            @if (!Model.AttendanceRecords.Any())
+            {
+                <tr id="noRecordsRow">
+                    <td colspan="8" class="text-center text-muted py-4">No attendance records found</td>
+                </tr>
+            }
+            else
+            {
+                var serialNo = 1;
+                @foreach (var record in Model.AttendanceRecords)
+                {
+                   <tr data-attendance-id="@record.AttendanceID" class="text-center attendance-row">
+                        <td><input type="checkbox" class="record-checkbox" value="@record.AttendanceID" /></td>
+                        <td class="record-serialno">@serialNo</td>
+                        <td>
+                            <span class="record-employeeid">@record.EmployeeID</span>
+                        </td>
+                        <td>
+                            <span class="record-date">@record.Date.ToString("dd-MM-yyyy")</span>
+                            <input type="date" class="form-control edit-input" value="@record.Date.ToString("yyyy-MM-dd")" style="display:none;" />
+                        </td>
+                        <td>
+                            <span class="record-status">@record.Status</span>
+                            <select class="form-control edit-input status-select" name="StatusID" style="display:none;">
+                                <option value="Present">Present</option>
+                                <option value="Absent">Absent</option>
+                                <option value="Leave">Leave</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span class="record-totalhours">@record.TotalHours</span>
+                            <input type="number" class="form-control edit-input" value="@record.TotalHours" style="display:none;" />
+                        </td>
+                        <td>
+
+                            <span class="record-leavetype">@record.LeaveType</span>
+                            <input type="text" class="form-control edit-input" value=" @record.LeaveType" style="display:none;" />
+                        </td>
+                        <td>
+                            <button class="btn btn-secondary recordSaveBtn" style="display: none;">SAVE</button>
+                        </td>
+                   </tr>
+                    serialNo++;
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-2">
+    <a asp-action="Index" class="btn btn-secondary">Back to Employee List</a>
+</div>
+
+
+<script>
+
+    $(document).ready(function () {
+
+        // Function to add a new row
+        var attendanceTableBody = $('.table-responsive .table-hover tbody');
+       
+        // Function to add a new row
+        $('#showAddRecordBtn').click(function ()
+        {
+            var employeeId = '@Model.Employee.EmployeeID';  // Server-side value
+            // Remove "No attendance records found" row if it exists
+            // $('.table-responsive .table-hover tbody tr').each(function () {
+            //     if ($(this).find('.text-muted').length > 0) {
+            //         $(this).remove();
+            //     }
+            // });
+            $('#noRecordsRow').remove();
+            var serialNo = $('.attendance-row').length + 1;
+            var newAttendanceRow = `
+                <tr data-employee-id="" class="text-center attendance-row new-record">
+       
+                <td><input type="checkbox" class="record-checkbox" value=""></td>
+            <td>${serialNo}</td> 
+        <td class="record-employeeid">${employeeId}</td>
+
+        <!-- Date Field -->
+        <td>
+            <span class="record-date">
+                <input type="date" class="form-control add-input" name="Date" required />
+            </span>
+            <input type="date" name="Date" class="form-control edit-input" style="display:none;" />
+        </td>
+
+        <!-- Status Field -->
+        <td>
+            <span class="record-status">
+                <select class="form-control add-input" name="Status" required>
+                    <option value="Present">Present</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Leave">Leave</option>
+                </select>
+            </span>
+            <select class="form-control edit-input" name="Status" style="display:none;">
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+                <option value="Leave">Leave</option>
+            </select>
+        </td>
+
+        <!-- Total Hours Field -->
+        <td>
+            <span class="record-totalhours">
+                <input type="number" class="form-control add-input" name="TotalHours" required />
+            </span>
+            <input type="number" name="TotalHours" class="form-control edit-input" style="display:none;" />
+        </td>
+
+        <!-- Leave Type Field -->
+        <td>
+            <span class="record-leavetype">
+                <input type="text" class="form-control add-input" name="LeaveType" />
+            </span>
+            <input type="text" name="LeaveType" class="form-control edit-input" style="display:none;" />
+        </td>
+
+        <td><button class="btn btn-primary addBtn">ADD</button></td>
+        <td>
+            <button class="btn btn-secondary recordSaveBtn" style="display: none;">SAVE</button>
+        </td>
+    </tr>
+    `;
+
+            $('.table-responsive .table-hover tbody').append(newAttendanceRow);
+           
+        });
+
+
+        function formatToTwoDecimalPlaces(value) {
+            return parseFloat(value).toFixed(2);
+        }
+
+       
+        // Save button functionality for new or edited rows
+        $(document).on('click', '.addBtn', function () {
+            var row = $('.attendance-row.new-record').last();
+            var attendanceData = {
+                EmployeeID: row.find('.record-employeeid').text(),
+                Date: row.find('.add-input[name="Date"]').val(),
+                Status: row.find('.add-input[name="Status"]').val(),
+                TotalHours: row.find('.add-input[name="TotalHours"]').val(),
+                LeaveType: row.find('.add-input[name="LeaveType"]').val()
+            };
+
+            $.ajax({
+                url: '/Employee/AddAttendance',  // Your endpoint for adding attendance
+                type: 'POST',
+                data: JSON.stringify(attendanceData),
+                contentType: 'application/json',
+                success: function (response) {
+                    console.log(response);
+                    if (response.success) {
+                        
+                        alert("Attendance saved successfully!");
+                        console.log('Attendance ID: ' + response.attendanceID);
+                        // Set the AttendanceID in the row
+                        row.attr('data-attendance-id', response.attendanceID);
+                        row.find('.record-checkbox').prop('value', response.attendanceID);
+
+                        console.log("Checkbox value set to: ", row.find('.record-checkbox').val()); // Log to verify
+                        
+                        // Format Total Hours (2 decimal places)
+                        var formattedTotalHours = formatToTwoDecimalPlaces(attendanceData.TotalHours);
+
+                         // Format Date to 'MM-dd-yyyy'
+                             var date = new Date(attendanceData.Date);
+                             var formattedDate = ('0' + (date.getMonth() + 1)).slice(-2) + '-' +
+                                    ('0' + date.getDate()).slice(-2) + '-' +
+                                    date.getFullYear();
+
+                        // Replace inputs with static text after saving
+                        row.find('.record-date').html(`<span>${formattedDate}</span>`);
+                        row.find('.record-status').text(attendanceData.Status);
+                        row.find('.record-totalhours').html(`<span>${formattedTotalHours}</span>`);
+                        row.find('.record-leavetype').text(attendanceData.LeaveType);
+
+                        // Copy values to edit-input fields (for future edits)
+                        row.find('.edit-input[name="Date"]').val(attendanceData.Date);
+                        row.find('.edit-input[name="Status"]').val(attendanceData.Status);
+                        row.find('.edit-input[name="TotalHours"]').val(attendanceData.TotalHours);
+                        row.find('.edit-input[name="LeaveType"]').val(attendanceData.LeaveType);
+
+                        // Hide the 'add' input fields and show the 'save' button
+                        row.find('.add-input').hide();
+                        row.find('.addBtn').remove();
+                    } else {
+                        alert("Error saving attendance: " + response.message);
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while saving the attendance.');
+                }
+            });
+        });
+
+
+        // Handle inline editing of employee fields
+        $('.editable').on('click', function () {
+
+            var field = $(this).data('field'); // Get the field that was clicked 
+            // Hide static text and show the input field or dropdown
+            $(this).find('span').hide(); // Hide the static text
+            $(this).find('.edit-input').show().focus(); // Show the input field and focus on it
+            $('#saveChangesBtn').show(); // Show the Save button
+            $('#cancelBtn').show(); // Show the Cancel button
+
+        }); 
+
+
+        //Save functionality
+        $('#saveChangesBtn').on('click', function () {
+            var updatedEmployee = {};
+            var employeeId = $('#employeeDetails').data('employee-id'); // Get employee ID from the page
+
+            // Loop through editable fields and gather updated data
+            $('.editable').each(function () {
+                var field = $(this).data('field'); //stores edited fields
+                var newValue;
+
+                // Check if the field is a dropdown for Department or Qualification
+                if (field === "Department") {
+                    newValue = $(this).find('select').val(); // Get selected DepartmentID
+                    updatedEmployee.DepartmentID = newValue; // Set DepartmentID explicitly
+                } else if (field === "Qualification") {
+                    newValue = $(this).find('select').val(); // Get selected QualificationID
+                    updatedEmployee.QualificationID = newValue; // Set QualificationID explicitly
+                } else {
+                    newValue = $(this).find('.edit-input').val(); // For other fields like Name, Position, etc.
+                    updatedEmployee[field] = newValue; // Dynamically set the other fields
+                }
+
+                // Ensure DepartmentID and QualificationID are selected
+                // if (field === "Department" && !newValue) {
+                //     alert("Please select a valid department.");
+                //     return false; Stop if no valid DepartmentID is selected
+                // }
+                // if (field === "Qualification" && (!newValue || newValue === "")) {
+                //     alert("Please select a valid qualification.");
+                //     return false; Stop if no valid QualificationID is selected
+                // }
+            });
+
+
+            // Make the AJAX request to update employee data
+            $.ajax({
+                url: '/Employee/Edit', // Endpoint to update employee data
+                type: 'POST',
+                data: {
+                    EmployeeID: employeeId,
+                    Name: updatedEmployee.Name,
+                    DepartmentID: updatedEmployee.DepartmentID,
+                    Position: updatedEmployee.Position,
+                    JoiningDate: updatedEmployee.JoiningDate,
+                    Salary: updatedEmployee.Salary,
+                    QualificationID: updatedEmployee.QualificationID,
+                    Mobile: updatedEmployee.Mobile,
+                    Email: updatedEmployee.Email,
+                },
+                success: function (result) {
+                    // Update the fields in the table with new values
+                    $('.editable').each(function () {
+                        var field = $(this).data('field');
+                        var updatedText = updatedEmployee[field];
+
+                        // For Department and Qualification, display the name instead of the ID
+                        if (field === "Department" && updatedEmployee.DepartmentID) {
+                            var departmentName = $(this).find('select option:selected').text();
+                            $(this).find('span').text(departmentName); // Update the department name
+                        } else if (field === "Qualification" && updatedEmployee.QualificationID) {
+                            var qualificationName = $(this).find('select option:selected').text();
+                            $(this).find('span').text(qualificationName); // Update the qualification name
+                        } else {
+                            $(this).find('span').text(updatedText); // Update the static text for other fields
+                        }
+
+                        $(this).find('.edit-input').hide(); // Hide the input field
+                        $(this).find('span').show(); // Show the updated static text
+                    });
+                    // Optionally hide the Save and Cancel buttons
+                    $('#saveChangesBtn').hide();
+                    $('#cancelBtn').hide();
+                },
+                error: function () {
+                    alert('Error updating employee.');
+                }
+            });
+        }); 
+
+
+        // Cancel editing functionality
+        $('#cancelBtn').on('click', function () {
+            // Reset all editable fields to their original state
+            $('.editable').each(function () {
+                $(this).find('.edit-input').hide(); // Hide input field
+                $(this).find('span').show(); // Show original text
+            });
+
+            // Hide Save and Cancel buttons
+            $('#saveChangesBtn').hide();
+            $('#cancelBtn').hide();
+        });
+
+
+        // Handle Department change to dynamically load Qualifications
+        $('.department-select').on('change', function () {
+            var departmentId = $(this).val();
+
+            // AJAX call to get qualifications based on selected department
+            $.ajax({
+                url: '/Employee/QualificationsByDepartment',  // Controller action to get qualifications by department
+                method: 'GET',
+                data: { departmentId: departmentId },
+                success: function (response) {
+                    var qualificationSelect = $('.qualification-select');
+                    qualificationSelect.empty();
+                    qualificationSelect.append('<option value="">Select Qualification</option>');
+
+                    if (response && response.length > 0) {
+                        $.each(response, function (index, qualification) {
+                            qualificationSelect.append('<option value="' + qualification.qualificationID + '">' + qualification.name + '</option>');
+                        });
+                    } else {
+                        qualificationSelect.append('<option value="">No Qualifications Available</option>');
+                    }
+                }
+
+            });
+        });
+
+
+        // Double-click to edit functionality (using event delegation)
+        $(document).on('dblclick', 'tr.new-record,.record-employeeid, .record-serialno,.record-date,.record-status,.record-totalhours,.record-leavetype', function () {
+            var row = $(this).closest('tr');
+
+            // Hide the static data (span elements)
+            row.find('.record-date, .record-status, .record-totalhours, .record-leavetype').hide();
+
+
+            // Show the corresponding input fields (edit mode)
+            row.find('.edit-input').show().first().focus(); // Focus on the first input
+
+            // Show the Save button and hide the Edit button
+            row.find('.recordSaveBtn').show();
+        });
+      
+
+        // Delegated event handler for the Save button
+        $(document).on('click', '.recordSaveBtn', function () {
+            var row = $(this).closest('tr');
+
+            var attendanceId = row.data('attendance-id');
+            var employeeId = row.find('.record-employeeid').text();
+            var attendanceDate = row.find('.edit-input').eq(0).val(); // Gets the Date field
+            var status = row.find('.edit-input').eq(1).val(); // Gets the Status field
+            var totalHours = row.find('.edit-input').eq(2).val(); // Gets TotalHours
+            var leaveType = row.find('.edit-input').eq(3).val(); // Gets LeaveType
+    
+            // Make an AJAX request to update the employee
+            $.ajax({
+                url: '@Url.Action("EditAttendance", "Employee")',
+                type: 'POST',
+                data: JSON.stringify({
+                    AttendanceID: attendanceId,
+                    EmployeeID: employeeId,
+                    Date: attendanceDate,
+                    Status: status,
+                    TotalHours: totalHours,
+                    LeaveType: leaveType
+                }),
+                contentType: 'application/json',
+                success: function (result) {
+                    if (result.success) {
+                        // Update table with new values
+                        var date = new Date(attendanceDate);
+
+                        // Check if the date is valid
+                        if (!isNaN(date)) {
+                            // Format the date to dd-mm-yyyy
+                            var formattedDate = ('0' + date.getDate()).slice(-2) + '-' +
+                                ('0' + (date.getMonth() + 1)).slice(-2) + '-' +
+                                date.getFullYear();
+
+                            // Set the formatted date to the .record-date element
+                            row.find('.record-date').text(formattedDate);
+                        } else {
+                            console.error("Invalid date format", attendanceDate);
+                        }
+                        row.find('.record-status').text(status);
+                        row.find('.record-totalhours').text(totalHours);
+                        row.find('.record-leavetype').text(leaveType);
+                        row.find('.edit-input').hide();
+                        row.find('.record-employeeid, .record-date, .record-status, .record-totalhours, .record-leavetype').show();
+                        row.find('.recordSaveBtn').hide();
+                    } else {
+                        alert("Error updating attendance: " + result.message);
+                    }
+                },
+                error: function () {
+                    alert('Error updating attendance');
+                }
+            });
+
+        });
+
+        //Delete functionality
+        $('#DeleteRecordBtn').click(function () {
+            const selectedIds = $('.record-checkbox:checked').map(function () {
+                const value = $(this).val();
+                return parseInt(value, 10); // value is treated as a number rather than a string
+            }).get(); //jQuery object into a regular JavaScript array
+
+            // Log the selected IDs to the console for debugging
+            console.log("Selected IDs: ", selectedIds);
+
+            if (selectedIds.length === 0) {
+                alert('Please select at least one record to delete.');
+                return;
+            }
+
+            // Show the modal
+            $('#deleteConfirmationModal').modal('show');
+
+            // Attach event to the confirm delete button
+            $('#confirmDeleteBtn').off('click').on('click', function () {
+                // Hide the modal after confirmation
+                $('#deleteConfirmationModal').modal('hide');
+
+                // Make AJAX request to delete records
+                $.ajax({
+                    url: '@Url.Action("DeleteMultipleAttendances", "Employee")',
+                    type: 'POST',
+                    contentType: 'application/json',  // Set the content type to application/json
+                    data: JSON.stringify(selectedIds),
+                    success: function (response) {
+                       
+                        if (response.success) {
+                            selectedIds.forEach(function (id) {
+                                $('tr[data-attendance-id="' + id + '"]').remove();
+                            });
+                        } else {
+                            alert("Error deleting records");
+                        }
+                    },
+                    error: function (jqXHR) {
+                        console.error("Error deleting records: ", jqXHR.responseText);  // Log the error message
+                        alert("Error deleting records: " + jqXHR.responseText);
+                    }
+                });
+            });
+        });
+
+
+
+    });
+
+</script>
+
